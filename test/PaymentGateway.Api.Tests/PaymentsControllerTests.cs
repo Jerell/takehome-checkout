@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using PaymentGateway.Api.Controllers;
 using PaymentGateway.Api.Models.Responses;
+using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Services;
 
 namespace PaymentGateway.Api.Tests;
@@ -17,7 +18,7 @@ public class PaymentsControllerTests
     public async Task RetrievesAPaymentSuccessfully()
     {
         // Arrange
-        var payment = new PostPaymentResponse
+        var payment = new Payment
         {
             Id = Guid.NewGuid(),
             ExpiryYear = _random.Next(2023, 2030),
@@ -38,7 +39,7 @@ public class PaymentsControllerTests
 
         // Act
         var response = await client.GetAsync($"/api/Payments/{payment.Id}");
-        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+        var paymentResponse = await response.Content.ReadFromJsonAsync<GetPaymentResponse>();
         
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
