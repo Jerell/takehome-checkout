@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-
+using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
 
@@ -35,5 +35,11 @@ public class PaymentsController : Controller
             Currency = payment.Currency,
             Amount = payment.Amount
         });
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(PostPaymentRequest paymentRequest)
+    {
+        throw new Exception("not implemented");
     }
 }
