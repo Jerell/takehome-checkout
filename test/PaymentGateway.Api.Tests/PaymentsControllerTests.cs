@@ -198,11 +198,14 @@ public class PaymentsControllerTests
 
     private class FakeBank : IBankService
     {
+        private readonly BankAuthorization _result;
+        public FakeBank(bool authorized) => _result = new BankAuthorization(authorized, "auth-123");
+
         public Task<BankAuthorization> AuthorizeAsync(
                 PostPaymentRequest req, CancellationToken ct
-            )
+               )
         {
-            return Task.FromResult(new BankAuthorization(true, "auth-123"));
+            return Task.FromResult(_result);
         }
     }
 
@@ -212,14 +215,49 @@ public class PaymentsControllerTests
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>()
             .WithWebHostBuilder(builder =>
                     builder.ConfigureServices(services =>
-                        services.AddSingleton<IBankService>(new FakeBank())
+                        services.AddSingleton<IBankService>(new FakeBank(true))
                         )
                     )
             .CreateClient();
 
+        var request = ValidRequest();
         var response = await webApplicationFactory
-            .PostAsJsonAsync("api/Payments", ValidRequest());
+            .PostAsJsonAsync("api/Payments", request);
+        var created = (await response.Content.ReadFromJsonAsync<PostPaymentResponse>())!;
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(PaymentStatus.Authorized, created.Status);
+        Assert.Equal("1111", created.CardNumberLastFour);
+        Assert.Equal(request.ExpiryMonth, created.ExpiryMonth);
+        Assert.Equal(request.Currency, created.Currency);
+        Assert.Equal(request.Amount, created.Amount);
+
+        var getResponse = await webApplicationFactory.GetAsync($"/api/Payments/{created.Id}");
+        var fetched = await getResponse.Content.ReadFromJsonAsync<GetPaymentResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Equal(created.Id, fetched?.Id);
+        Assert.Equal(PaymentStatus.Authorized, fetched?.Status);
+    }
+
+    [Fact]
+    public async Task ReturnsDeclinedWhenBankDeclines()
+    {
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>()
+            .WithWebHostBuilder(builder =>
+                    builder.ConfigureServices(services =>
+                        services.AddSingleton<IBankService>(new FakeBank(false))
+                        )
+                    )
+            .CreateClient();
+
+        var request = ValidRequest();
+        request.CardNumber = "4111111111111112";
+
+        var response = await webApplicationFactory.PostAsJsonAsync("api/Payments", request);
+        var body = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(PaymentStatus.Declined, body?.Status);
     }
 }

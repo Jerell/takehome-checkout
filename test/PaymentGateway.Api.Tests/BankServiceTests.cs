@@ -46,4 +46,20 @@ public class BankServiceTests
         // Assert
         Assert.False(result.Authorized);
     }
+
+    [Fact]
+    public async Task RejectsCardEndingInZero()
+    {
+        // Arrange
+        var bank = RealBank();
+
+        // Act
+        var action = () => bank.AuthorizeAsync(
+                Request("4111111111111110"),
+                CancellationToken.None
+        );
+
+        // Assert
+        await Assert.ThrowsAsync<HttpRequestException>(action);
+    }
 }

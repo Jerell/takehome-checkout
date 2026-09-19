@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
@@ -43,8 +44,54 @@ public class PaymentsController : Controller
     }
 
     [HttpPost]
-    public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(PostPaymentRequest paymentRequest)
+    public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(
+            PostPaymentRequest paymentRequest,
+            CancellationToken ct
+            )
     {
-        throw new Exception("not implemented");
+        BankAuthorization authorization;
+
+        try {
+            authorization = await _bankService.AuthorizeAsync(paymentRequest, ct);
+        }
+        catch (HttpRequestException) { // service unavailable or 503 if CardNumber ends with 0
+            var rejected = BuildPayment(paymentRequest, PaymentStatus.Rejected);
+            _paymentsRepository.Add(rejected);
+            return StatusCode(StatusCodes.Status502BadGateway, ToResponse(rejected));
+        }
+
+        var status = authorization.Authorized
+            ? PaymentStatus.Authorized
+            : PaymentStatus.Declined;
+
+        var payment = BuildPayment(paymentRequest, status);
+        _paymentsRepository.Add(payment);
+         
+        return new CreatedResult($"/api/Payments/{payment.Id}", ToResponse(payment));
     }
+
+    private static Payment BuildPayment(
+            PostPaymentRequest request,
+            PaymentStatus status
+            ) => new()
+    {
+        Id = Guid.NewGuid(),
+        Status = status,
+        CardNumberLastFour = request.CardNumber[^4..],
+        ExpiryMonth = request.ExpiryMonth,
+        ExpiryYear = request.ExpiryYear,
+        Currency = request.Currency,
+        Amount = request.Amount
+    };
+
+    private static PostPaymentResponse ToResponse(Payment payment) => new()
+    {
+        Id = payment.Id,
+        Status = payment.Status,
+        CardNumberLastFour = payment.CardNumberLastFour,
+        ExpiryMonth = payment.ExpiryMonth,
+        ExpiryYear = payment.ExpiryYear,
+        Currency = payment.Currency,
+        Amount = payment.Amount
+    };
 }
