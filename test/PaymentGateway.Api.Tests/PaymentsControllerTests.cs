@@ -69,6 +69,8 @@ public class PaymentsControllerTests
 
     [Theory]
     [InlineData("123")]
+    [InlineData("41111111111111111234")]
+    [InlineData("4111-1111-1111-111a")]
     public async Task RejectsInvalidCardNumber(string cardNumber) 
     {
         // Arrange
