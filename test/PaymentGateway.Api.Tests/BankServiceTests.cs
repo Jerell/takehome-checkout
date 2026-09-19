@@ -28,6 +28,7 @@ public class BankServiceTests
 
         // Assert
         Assert.True(result.Authorized);
+        Assert.False(string.IsNullOrEmpty(result.AuthorizationCode));
     }
 
     [Fact]
