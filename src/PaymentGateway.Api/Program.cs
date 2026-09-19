@@ -10,7 +10,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<PaymentsRepository>();
-builder.Services.AddSingleton<IBankService, BankService>();
+builder.Services.AddHttpClient<IBankService, BankService>(client =>
+    client.BaseAddress = new Uri("http://localhost:8080"));
 
 var app = builder.Build();
 
