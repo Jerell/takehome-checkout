@@ -104,4 +104,23 @@ public class PaymentsControllerTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(10000)]
+    public async Task RejectsInvalidExpiryYear(int expiryYear)
+    {
+        // Arrange
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+        var req = ValidRequest();
+        req.ExpiryYear = expiryYear;
+
+        // Act
+        var response = await client.PostAsJsonAsync("api/Payments", req);
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+    }
 }
