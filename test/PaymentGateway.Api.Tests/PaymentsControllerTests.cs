@@ -195,4 +195,31 @@ public class PaymentsControllerTests
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    private class FakeBank : IBankService
+    {
+        public Task<BankAuthorization> AuthorizeAsync(
+                PostPaymentRequest req, CancellationToken ct
+            )
+        {
+            return Task.FromResult(new BankAuthorization(true, "auth-123"));
+        }
+    }
+
+    [Fact]
+    public async Task AcceptsValidPayment()
+    {
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>()
+            .WithWebHostBuilder(builder =>
+                    builder.ConfigureServices(services =>
+                        services.AddSingleton<IBankService>(new FakeBank())
+                        )
+                    )
+            .CreateClient();
+
+        var response = await webApplicationFactory
+            .PostAsJsonAsync("api/Payments", ValidRequest());
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
 }

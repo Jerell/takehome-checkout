@@ -10,10 +10,15 @@ namespace PaymentGateway.Api.Controllers;
 public class PaymentsController : Controller
 {
     private readonly PaymentsRepository _paymentsRepository;
+    private readonly IBankService _bankService;
 
-    public PaymentsController(PaymentsRepository paymentsRepository)
+    public PaymentsController(
+            PaymentsRepository paymentsRepository,
+            IBankService bankService
+            )
     {
         _paymentsRepository = paymentsRepository;
+        _bankService = bankService;
     }
 
     [HttpGet("{id:guid}")]

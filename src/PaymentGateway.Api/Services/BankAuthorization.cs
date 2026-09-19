@@ -1,0 +1,1 @@
+public record BankAuthorization(bool Authorized, string? AuthorizationCode);
