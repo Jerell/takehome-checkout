@@ -102,7 +102,6 @@ public class PaymentsControllerTests
         
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
     }
 
     [Theory]
@@ -121,6 +120,5 @@ public class PaymentsControllerTests
         
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
     }
 }
