@@ -176,4 +176,23 @@ public class PaymentsControllerTests
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Theory]
+    [InlineData("12")]      // too short
+    [InlineData("12345")]   // too long
+    [InlineData("12a")]
+    public async Task RejectsInvalidCvv(string cvv)
+    {
+        // Arrange
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+        var req = ValidRequest();
+        req.Cvv = cvv;
+
+        // Act
+        var response = await client.PostAsJsonAsync("api/Payments", req);
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
