@@ -1,3 +1,4 @@
+using Prometheus;
 using PaymentGateway.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,9 +23,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/metrics"),
+    app => app.UseHttpsRedirection());
 
 app.UseAuthorization();
+
+app.UseMetricServer();
 
 app.MapControllers();
 

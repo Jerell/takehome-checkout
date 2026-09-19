@@ -1,8 +1,11 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using PaymentGateway.Api.Models.Requests;
 
 public class BankServiceTests
 {
-    private static BankService RealBank() => new(new HttpClient { BaseAddress = new Uri("http://localhost:8080") });
+    private static BankService RealBank() => new(
+        new HttpClient { BaseAddress = new Uri("http://localhost:8080") },
+        NullLogger<BankService>.Instance);
 
     private static PostPaymentRequest Request(string cardNumber) => new()
     {

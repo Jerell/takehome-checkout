@@ -4,10 +4,12 @@ using PaymentGateway.Api.Models.Requests;
 public class BankService : IBankService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<BankService> _logger;
 
-    public BankService(HttpClient httpClient)
+    public BankService(HttpClient httpClient, ILogger<BankService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
     }
 
     public async Task<BankAuthorization> AuthorizeAsync(
@@ -26,6 +28,10 @@ public class BankService : IBankService
 
         var response = await _httpClient.PostAsJsonAsync("/payments", payload, ct);
         if (!response.IsSuccessStatusCode) {
+            _logger.LogError(
+                "Bank returned {StatusCode} for card ending {CardEnding} ({Amount} {Currency})",
+                (int)response.StatusCode, req.CardNumber[^4..], req.Amount, req.Currency);
+
             throw new HttpRequestException(
                 $"Bank simulator returned {(int)response.StatusCode}");
         }

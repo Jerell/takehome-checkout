@@ -12,14 +12,17 @@ public class PaymentsController : Controller
 {
     private readonly PaymentsRepository _paymentsRepository;
     private readonly IBankService _bankService;
+    private readonly ILogger<PaymentsController> _logger;
 
     public PaymentsController(
             PaymentsRepository paymentsRepository,
-            IBankService bankService
+            IBankService bankService,
+            ILogger<PaymentsController> logger
             )
     {
         _paymentsRepository = paymentsRepository;
         _bankService = bankService;
+        _logger = logger;
     }
 
     [HttpGet("{id:guid}")]
@@ -57,6 +60,10 @@ public class PaymentsController : Controller
         catch (HttpRequestException) { // service unavailable or 503 if CardNumber ends with 0
             var rejected = BuildPayment(paymentRequest, PaymentStatus.Rejected);
             _paymentsRepository.Add(rejected);
+            _logger.LogInformation(
+                "Payment {PaymentId} stored as {Status} after bank failure ({Amount} {Currency}, card ending {CardEnding})",
+                rejected.Id, rejected.Status, rejected.Amount, rejected.Currency, rejected.CardNumberLastFour);
+            PaymentMetrics.Record(rejected.Status);
             return StatusCode(StatusCodes.Status502BadGateway, ToResponse(rejected));
         }
 
@@ -66,6 +73,10 @@ public class PaymentsController : Controller
 
         var payment = BuildPayment(paymentRequest, status);
         _paymentsRepository.Add(payment);
+        _logger.LogInformation(
+            "Payment {PaymentId} stored as {Status} ({Amount} {Currency}, card ending {CardEnding})",
+            payment.Id, payment.Status, payment.Amount, payment.Currency, payment.CardNumberLastFour);
+        PaymentMetrics.Record(payment.Status);
          
         return new CreatedResult($"/api/Payments/{payment.Id}", ToResponse(payment));
     }
