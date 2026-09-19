@@ -140,4 +140,23 @@ public class PaymentsControllerTests
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Theory]
+    [InlineData("AUD")]
+    [InlineData("JPY")]
+    public async Task RejectsUnknownCurrency(string currency)
+    {
+        // Arrange
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+        var req = ValidRequest();
+        req.Currency = currency;
+
+        // Act
+        var response = await client.PostAsJsonAsync("api/Payments", req);
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
 }
