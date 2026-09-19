@@ -159,4 +159,21 @@ public class PaymentsControllerTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task RejectsInvalidAmount(int amount)
+    {
+        // Arrange
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+        var req = ValidRequest();
+        req.Amount = amount;
+
+        // Act
+        var response = await client.PostAsJsonAsync("api/Payments", req);
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
